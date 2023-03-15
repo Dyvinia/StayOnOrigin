@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net7.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <PublishAot>true</PublishAot>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+
+    <AssemblyName>StayOnOrigin</AssemblyName>
+    <Version>1.0.0</Version>
+    <Copyright>Copyright © 2023 Dyvinia</Copyright>
+    <Company>Dyvinia</Company>
+  </PropertyGroup>
+
+</Project>
