@@ -41,8 +41,8 @@ namespace StayOnOrigin {
             // End
             ResetTempDir(false);
             Console.WriteLine("Done");
-            AnyKeyContinue();
-
+            Console.Write("Press Any Key to Exit...");
+            Console.ReadKey();
         }
 
         static async Task UpdateOrigin() {
@@ -164,11 +164,6 @@ namespace StayOnOrigin {
 
         static void WriteSeparator() {
             Console.WriteLine(new string('-', Console.WindowWidth - 1));
-        }
-
-        static void AnyKeyContinue() {
-            Console.Write("Press Any Key to Continue...");
-            Console.ReadKey();
         }
     }
 }
