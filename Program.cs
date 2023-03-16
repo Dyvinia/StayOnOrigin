@@ -7,8 +7,8 @@ using Microsoft.Win32;
 namespace StayOnOrigin {
     internal class Program {
         public static string OriginPath => Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Origin")?.GetValue("OriginPath")?.ToString();
-        public static string originSetupInternal = OriginPath.Replace("Origin.exe", "OriginSetupInternal.exe");
-        public static string originThinSetupInternal = OriginPath.Replace("Origin.exe", "OriginThinSetupInternal.exe");
+        public static string originSetupInternal => OriginPath.Replace("Origin.exe", "OriginSetupInternal.exe");
+        public static string originThinSetupInternal => OriginPath.Replace("Origin.exe", "OriginThinSetupInternal.exe");
         public static Version OriginVersion => new(FileVersionInfo.GetVersionInfo(OriginPath).FileVersion.Replace(",", "."));
         public static string TempFolder => Path.Combine(Environment.CurrentDirectory, "temp");
 
@@ -33,8 +33,8 @@ namespace StayOnOrigin {
             }
 
             // Delete Origin's internal updater
-            ClearFile(originSetupInternal);
-            ClearFile(originThinSetupInternal);
+            ClearFile(originSetupInternal, false);
+            ClearFile(originThinSetupInternal, false);
             WriteSeparator();
 
             // Disable EA Desktop migration
@@ -76,15 +76,21 @@ namespace StayOnOrigin {
             Console.WriteLine($"Installed Origin v10.5.118.52644");
         }
 
-        static void ClearFile(string path) {
-            if (File.Exists(path) {
-                // Backup file by copying to file.exe.bak
-                Console.WriteLine($"Backing up {path}");
-                File.Copy(path, path + ".bak", true);
+        static void ClearFile(string path, bool readOnly) {
+            if (File.Exists(path)) {
+                if (!File.GetAttributes(path).HasFlag(FileAttributes.ReadOnly)){
+                    // Backup file by copying to file.exe.bak
+                    Console.WriteLine($"Backing up {path}");
+                    File.Copy(path, path + ".bak", true);
 
-                // Replace the contents of the file with nothing
-                Console.WriteLine($"Clearing {path}");
-                File.WriteAllText(path, "");
+                    // Replace the contents of the file with nothing
+                    Console.WriteLine($"Clearing {path}");
+                    File.WriteAllText(path, "");
+
+                    // Set the file to read-only
+                    if (readOnly)
+                        File.SetAttributes(path, FileAttributes.ReadOnly);
+                }
             }
         }
 
