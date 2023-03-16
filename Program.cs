@@ -48,7 +48,7 @@ namespace StayOnOrigin {
         static async Task UpdateOrigin() {
             ResetTempDir();
 
-            // Download
+            // Download from EA Servers
             string originURL = @"https://origin-a.akamaihd.net/Origin-Client-Download/origin/live/OriginUpdate_10_5_118_52644.zip";
             string destinationPath = Path.Combine(TempFolder, Path.GetFileName(originURL));
 
