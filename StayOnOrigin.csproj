@@ -10,7 +10,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <AssemblyName>StayOnOrigin</AssemblyName>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Copyright>Copyright © 2023 Dyvinia</Copyright>
     <Company>Dyvinia</Company>
   </PropertyGroup>
