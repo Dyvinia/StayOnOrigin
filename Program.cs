@@ -7,6 +7,8 @@ using Microsoft.Win32;
 namespace StayOnOrigin {
     internal class Program {
         public static string OriginPath => Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Origin")?.GetValue("OriginPath")?.ToString();
+        public static string originSetupInternal = OriginPath.Replace("Origin.exe", "OriginSetupInternal.exe");
+        public static string originThinSetupInternal = OriginPath.Replace("Origin.exe", "OriginThinSetupInternal.exe");
         public static Version OriginVersion => new(FileVersionInfo.GetVersionInfo(OriginPath).FileVersion.Replace(",", "."));
         public static string TempFolder => Path.Combine(Environment.CurrentDirectory, "temp");
 
@@ -31,7 +33,8 @@ namespace StayOnOrigin {
             }
 
             // Delete Origin's internal updater
-            RemoveSetupInternal();
+            ClearFile(originSetupInternal);
+            ClearFile(originThinSetupInternal);
             WriteSeparator();
 
             // Disable EA Desktop migration
@@ -73,28 +76,15 @@ namespace StayOnOrigin {
             Console.WriteLine($"Installed Origin v10.5.118.52644");
         }
 
-        static void RemoveSetupInternal() {
-            string originSetupInternal = OriginPath.Replace("Origin.exe", "OriginSetupInternal.exe");
-            string originThinSetupInternal = OriginPath.Replace("Origin.exe", "OriginThinSetupInternal.exe");
-
-            if (File.Exists(originSetupInternal)) {
+        static void ClearFile(string path) {
+            if (File.Exists(path) {
                 // Backup file by copying to file.exe.bak
-                Console.WriteLine($"Backing up {originSetupInternal}");
-                File.Copy(originSetupInternal, originSetupInternal + ".bak", true);
+                Console.WriteLine($"Backing up {path}");
+                File.Copy(path, path + ".bak", true);
 
                 // Replace the contents of the file with nothing
-                Console.WriteLine($"Clearing {originSetupInternal}");
-                File.WriteAllText(originSetupInternal, "");
-            }
-
-            if (File.Exists(originThinSetupInternal)) {
-                // Backup file by copying to file.exe.bak
-                Console.WriteLine($"Backing up {originThinSetupInternal}");
-                File.Copy(originThinSetupInternal, originThinSetupInternal + ".bak", true);
-
-                // Replace the contents of the file with nothing
-                Console.WriteLine($"Clearing {originThinSetupInternal}");
-                File.WriteAllText(originThinSetupInternal, "");
+                Console.WriteLine($"Clearing {path}");
+                File.WriteAllText(path, "");
             }
         }
 
