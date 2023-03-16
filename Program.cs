@@ -1,22 +1,52 @@
 ﻿using System.Diagnostics;
 using System.IO.Compression;
 using System.Reflection;
+using System.Threading.Tasks;
 using DyviniaUtils;
 using Microsoft.Win32;
 
 namespace StayOnOrigin {
     internal class Program {
         public static string OriginPath => Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Origin")?.GetValue("OriginPath")?.ToString();
-        public static Version OriginVersion => new(FileVersionInfo.GetVersionInfo(OriginPath).FileVersion.Replace(",", "."));
+        public static Version OriginVersion;
+        public static string CurrentDownloadUrl;
         public static string TempDirPath => Path.Combine(Environment.CurrentDirectory, "temp");
 
-        static void Main() {
+        static async Task Main() {
             // Version and Stuff
             Console.WriteLine($"StayOnOrigin v{Assembly.GetEntryAssembly().GetName().Version.ToString()[..5]} by Dyvinia");
             WriteSeparator();
 
             // Kill All Origin/EA related processes
             KillEA();
+
+            // Try to find Origin's version
+            try {
+                OriginVersion = new(FileVersionInfo.GetVersionInfo(OriginPath).FileVersion.Replace(",", "."));
+            }
+            // If Origin is not installed
+            catch (Exception) {
+                Console.WriteLine("Origin is not installed or could not be found.");
+                Console.WriteLine("Press Y to install Origin, or any other key to exit.");
+                ConsoleKeyInfo key = Console.ReadKey();
+                if (key.Key != ConsoleKey.Y)
+                    Environment.Exit(0);
+
+                // Dowload Origin
+                WriteSeparator();
+                await urlDownloader(@"https://cdn.discordapp.com/attachments/693482239593283694/1086045449191968899/OriginSetup_1.exe");
+                string destinationPath = Path.Combine(TempDirPath, Path.GetFileName(CurrentDownloadUrl));
+
+                // Install Origin
+                var originInstall = Process.Start(destinationPath);
+                Console.WriteLine("Origin is being installed...");
+                originInstall.WaitForExit();
+                KillEA();
+                ResetTempDir();
+
+                // Get new installed version
+                OriginVersion = new(FileVersionInfo.GetVersionInfo(OriginPath).FileVersion.Replace(",", "."));
+            }
 
             // Check if Origin is too new (Anything after 10.5.120.x)
             if (OriginVersion.CompareTo(new("10.5.120.0")) > 0) {
@@ -45,22 +75,28 @@ namespace StayOnOrigin {
             Console.Write("Press Any Key to Exit...");
             Console.ReadKey();
         }
-
-        static async Task UpdateOrigin() {
+        
+        static async Task urlDownloader(string url) {
             ResetTempDir();
 
-            // Download from EA Servers
-            string originURL = @"https://origin-a.akamaihd.net/Origin-Client-Download/origin/live/OriginUpdate_10_5_118_52644.zip";
-            string destinationPath = Path.Combine(TempDirPath, Path.GetFileName(originURL));
+            // Download from server
+            string destinationPath = Path.Combine(TempDirPath, Path.GetFileName(url));
 
             IProgress<double> progress = new Progress<double>(p => {
                 int percentage = Convert.ToInt32(p * 100);
                 Console.Write($"\rDownloading: {percentage}%");
             });
 
-            await Downloader.Download(originURL, destinationPath, progress);
+            await Downloader.Download(url, destinationPath, progress);
             Console.WriteLine();
-            Console.WriteLine($"Downloaded {Path.GetFileName(originURL)}");
+            Console.WriteLine($"Downloaded {Path.GetFileName(url)}");
+            CurrentDownloadUrl = url;
+        }
+
+        static async Task UpdateOrigin() {
+            // Download from EA Servers
+            await urlDownloader(@"https://origin-a.akamaihd.net/Origin-Client-Download/origin/live/OriginUpdate_10_5_118_52644.zip");
+            string destinationPath = Path.Combine(TempDirPath, Path.GetFileName(CurrentDownloadUrl));
 
             // Install
             using ZipArchive archive = ZipFile.OpenRead(destinationPath);
@@ -74,7 +110,7 @@ namespace StayOnOrigin {
             Console.WriteLine($"Installed Origin v10.5.118.52644");
         }
 
-        static void ClearFile(string path, bool readOnly) {
+        static void ClearFile(string path, bool readOnly = false) {
             if (File.Exists(path)) {
                 if (!File.GetAttributes(path).HasFlag(FileAttributes.ReadOnly)){
                     // Backup file by copying to file.exe.bak
