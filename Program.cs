@@ -7,10 +7,8 @@ using Microsoft.Win32;
 namespace StayOnOrigin {
     internal class Program {
         public static string OriginPath => Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Origin")?.GetValue("OriginPath")?.ToString();
-        public static string originSetupInternal => OriginPath.Replace("Origin.exe", "OriginSetupInternal.exe");
-        public static string originThinSetupInternal => OriginPath.Replace("Origin.exe", "OriginThinSetupInternal.exe");
         public static Version OriginVersion => new(FileVersionInfo.GetVersionInfo(OriginPath).FileVersion.Replace(",", "."));
-        public static string TempFolder => Path.Combine(Environment.CurrentDirectory, "temp");
+        public static string TempDirPath => Path.Combine(Environment.CurrentDirectory, "temp");
 
         static void Main() {
             // Version and Stuff
@@ -33,8 +31,8 @@ namespace StayOnOrigin {
             }
 
             // Delete Origin's internal updater
-            ClearFile(originSetupInternal, false);
-            ClearFile(originThinSetupInternal, false);
+            ClearFile(OriginPath.Replace("Origin.exe", "OriginSetupInternal.exe"), false);
+            ClearFile(OriginPath.Replace("Origin.exe", "OriginThinSetupInternal.exe"), false);
             WriteSeparator();
 
             // Disable EA Desktop migration
@@ -53,7 +51,7 @@ namespace StayOnOrigin {
 
             // Download from EA Servers
             string originURL = @"https://origin-a.akamaihd.net/Origin-Client-Download/origin/live/OriginUpdate_10_5_118_52644.zip";
-            string destinationPath = Path.Combine(TempFolder, Path.GetFileName(originURL));
+            string destinationPath = Path.Combine(TempDirPath, Path.GetFileName(originURL));
 
             IProgress<double> progress = new Progress<double>(p => {
                 int percentage = Convert.ToInt32(p * 100);
@@ -99,30 +97,25 @@ namespace StayOnOrigin {
 
             Console.WriteLine($"Opening {localXML}");
             string[] fileLines = File.ReadAllLines(localXML).ToArray();
+
             List<string> fileLinesNew = new();
-
-            string migrationSetting = "  <Setting value=\"true\" key=\"MigrationDisabled\" type=\"1\"/>";
-            string updateUrlSetting = "  <Setting key=\"UpdateURL\" value=\"http://blah.blah/\" type=\"10\"/>";
-            string autoPatchGlobalSetting = "  <Setting key=\"AutoPatchGlobal\" value=\"true\" type=\"1\"/>";
-            string autoUpdateSetting = "  <Setting value=\"true\" key=\"AutoUpdate\" type=\"1\"/>";
-
             List<string> settingsCheck = new() {
-                "</Settings>",
-                migrationSetting,
-                updateUrlSetting,
-                autoPatchGlobalSetting,
-                autoUpdateSetting
+                "MigrationDisabled",
+                "UpdateURL",
+                "AutoPatchGlobal",
+                "AutoUpdate",
+                "/Settings"
             };
             foreach (string line in fileLines) {
                 if (!settingsCheck.Any(line.Contains))
                     fileLinesNew.Add(line);
             }
 
-            // Add stuff
-            fileLinesNew.Add(migrationSetting);
-            fileLinesNew.Add(updateUrlSetting);
-            fileLinesNew.Add(autoPatchGlobalSetting.Replace("true", "false"));
-            fileLinesNew.Add(autoUpdateSetting.Replace("true", "false"));
+            // Add new settings
+            fileLinesNew.Add("  <Setting key=\"MigrationDisabled\" value=\"true\" type=\"1\"/>");
+            fileLinesNew.Add("  <Setting key=\"UpdateURL\" value=\"http://blah.blah/\" type=\"10\"/>");
+            fileLinesNew.Add("  <Setting key=\"AutoPatchGlobal\" value=\"false\" type=\"1\"/>");
+            fileLinesNew.Add("  <Setting key=\"AutoUpdate\" value=\"false\" type=\"1\"/>");
             fileLinesNew.Add("</Settings>");
 
             // write new text
@@ -152,10 +145,10 @@ namespace StayOnOrigin {
         }
 
         static void ResetTempDir(bool recreateDir = true) {
-            if (Directory.Exists(TempFolder))
-                Directory.Delete(TempFolder, true);
+            if (Directory.Exists(TempDirPath))
+                Directory.Delete(TempDirPath, true);
             if (recreateDir)
-                Directory.CreateDirectory(TempFolder);
+                Directory.CreateDirectory(TempDirPath);
         }
 
         static void WriteSeparator() {
