@@ -16,7 +16,7 @@ namespace StayOnOrigin {
             WriteSeparator();
 
             // Kill All Origin/EA related processes
-            KillEA();
+            KillProcesses();
 
             // Check if Origin Exists
             if (!File.Exists(OriginPath)) {
@@ -128,7 +128,7 @@ namespace StayOnOrigin {
             File.WriteAllLines(localXML, fileLinesNew.ToArray());
         }
 
-        static void KillEA() {
+        static void KillProcesses() {
             bool addSeparator = false;
             foreach (Process process in Process.GetProcessesByName("EADesktop")) {
                 process.Kill();
