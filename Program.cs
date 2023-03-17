@@ -6,7 +6,7 @@ using Microsoft.Win32;
 
 namespace StayOnOrigin {
     internal class Program {
-        public static string OriginPath => Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Origin")?.GetValue("OriginPath")?.ToString();
+        public static string OriginPath => Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Oraigin")?.GetValue("OriginPath")?.ToString();
         public static Version OriginVersion => new(FileVersionInfo.GetVersionInfo(OriginPath).FileVersion.Replace(",", "."));
         public static string TempDirPath => Path.Combine(Environment.CurrentDirectory, "temp");
 
@@ -17,6 +17,14 @@ namespace StayOnOrigin {
 
             // Kill All Origin/EA related processes
             KillEA();
+
+            // Check if Origin Exists
+            if (!File.Exists(OriginPath)) {
+                Console.WriteLine("Origin Not Found");
+                Console.Write("Press Any Key to Exit...");
+                Console.ReadKey();
+                Environment.Exit(0);
+            }
 
             // Check if Origin is too new (Anything after 10.5.120.x)
             if (OriginVersion.CompareTo(new("10.5.120.0")) > 0) {
