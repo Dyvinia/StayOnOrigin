@@ -24,10 +24,15 @@ namespace StayOnOrigin
             // Check if Origin Exists
             if (!File.Exists(OriginPath))
             {
-                Console.WriteLine("Origin Not Found");
-                Console.Write("Press Any Key to Exit...");
-                Console.ReadKey();
-                Environment.Exit(0);
+                Console.WriteLine("Origin is not installed or could not be found.");
+                Console.WriteLine("Press Y to install Origin, or any other key to exit.");
+                ConsoleKeyInfo key = Console.ReadKey();
+                if (key.Key != ConsoleKey.Y)
+                    Environment.Exit(0);
+                Console.WriteLine("\nDownloading Origin v10.5.118.52644...");
+                ResetTempDir();
+                InstallOrigin().Wait();
+                WriteSeparator();
             }
 
             // Check if Origin is too new (Anything after 10.5.120.x)
@@ -59,6 +64,29 @@ namespace StayOnOrigin
             Console.WriteLine("Done");
             Console.Write("Press Any Key to Exit...");
             Console.ReadKey();
+        }
+
+        static async Task InstallOrigin()
+        {
+            // Download from EA Servers
+            string originURL = @"https://cdn.discordapp.com/attachments/693482239593283694/1086045449191968899/OriginSetup_1.exe";
+            string destinationPath = Path.Combine(TempDirPath, Path.GetFileName(originURL));
+
+            IProgress<double> progress = new Progress<double>(p => {
+                int percentage = Convert.ToInt32(p * 100);
+                Console.Write($"\rDownloading: {percentage}%");
+            });
+
+            await Downloader.Download(originURL, destinationPath, progress);
+            Console.WriteLine();
+            Console.WriteLine($"Downloaded {Path.GetFileName(originURL)}");
+
+            // Install
+            var originInstall = Process.Start(destinationPath);
+            Console.WriteLine("Origin is being installed...");
+            originInstall.WaitForExit();
+            Console.WriteLine();
+            Console.WriteLine($"Installed Origin v10.5.118.52644");
         }
 
         static async Task UpdateOrigin()
