@@ -6,7 +6,7 @@ using Microsoft.Win32;
 
 namespace StayOnOrigin {
     internal class Program {
-        public static string OriginPath => Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Oraigin")?.GetValue("OriginPath")?.ToString();
+        public static string OriginPath => Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Origin")?.GetValue("OriginPath")?.ToString();
         public static Version OriginVersion => new(FileVersionInfo.GetVersionInfo(OriginPath).FileVersion.Replace(",", "."));
         public static string TempDirPath => Path.Combine(Environment.CurrentDirectory, "temp");
 
@@ -30,6 +30,7 @@ namespace StayOnOrigin {
             if (OriginVersion.CompareTo(new("10.5.120.0")) > 0) {
                 Console.WriteLine($"Origin v{OriginVersion} is too recent");
                 Console.WriteLine("Downgrading to Origin v10.5.118.52644...");
+                ResetTempDir();
                 UpdateOrigin().Wait();
                 WriteSeparator();
             }
@@ -55,8 +56,6 @@ namespace StayOnOrigin {
         }
 
         static async Task UpdateOrigin() {
-            ResetTempDir();
-
             // Download from EA Servers
             string originURL = @"https://origin-a.akamaihd.net/Origin-Client-Download/origin/live/OriginUpdate_10_5_118_52644.zip";
             string destinationPath = Path.Combine(TempDirPath, Path.GetFileName(originURL));
@@ -83,20 +82,18 @@ namespace StayOnOrigin {
         }
 
         static void ClearFile(string path, bool readOnly) {
-            if (File.Exists(path)) {
-                if (!File.GetAttributes(path).HasFlag(FileAttributes.ReadOnly)){
-                    // Backup file by copying to file.exe.bak
-                    Console.WriteLine($"Backing up {path}");
-                    File.Copy(path, path + ".bak", true);
+            if (File.Exists(path) && !File.GetAttributes(path).HasFlag(FileAttributes.ReadOnly)) {
+                // Backup file by copying to file.exe.bak
+                Console.WriteLine($"Backing up {path}");
+                File.Copy(path, path + ".bak", true);
 
-                    // Replace the contents of the file with nothing
-                    Console.WriteLine($"Clearing {path}");
-                    File.WriteAllText(path, "");
+                // Replace the contents of the file with nothing
+                Console.WriteLine($"Clearing {path}");
+                File.WriteAllText(path, "");
 
-                    // Set the file to read-only
-                    if (readOnly)
-                        File.SetAttributes(path, FileAttributes.ReadOnly);
-                }
+                // Set the file to read-only
+                if (readOnly)
+                    File.SetAttributes(path, FileAttributes.ReadOnly);
             }
         }
 
@@ -149,7 +146,7 @@ namespace StayOnOrigin {
                 addSeparator = true;
             }
             if (addSeparator)
-                WriteSeparator();
+                WriteSeparator(); // Prevent double separator from appearing in console
         }
 
         static void ResetTempDir(bool recreateDir = true) {
