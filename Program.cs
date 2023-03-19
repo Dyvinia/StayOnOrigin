@@ -69,7 +69,8 @@ namespace StayOnOrigin
         static async Task InstallOrigin()
         {
             // Download from EA Servers
-            string originURL = @"https://cdn.discordapp.com/attachments/693482239593283694/1086045449191968899/OriginSetup_1.exe";
+            //string originURL = @"https://cdn.discordapp.com/attachments/693482239593283694/1086045449191968899/OriginSetup_1.exe";
+            string originURL = @"https://download.dm.origin.com/origin/live/OriginSetup.exe";
             string destinationPath = Path.Combine(TempDirPath, Path.GetFileName(originURL));
 
             IProgress<double> progress = new Progress<double>(p => {
@@ -86,7 +87,7 @@ namespace StayOnOrigin
             Console.WriteLine("Origin is being installed...");
             originInstall.WaitForExit();
             Console.WriteLine();
-            Console.WriteLine($"Installed Origin v10.5.118.52644");
+            Console.WriteLine($"Installed Origin");
         }
 
         static async Task UpdateOrigin()
