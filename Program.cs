@@ -18,9 +18,6 @@ namespace StayOnOrigin
             Console.WriteLine($"StayOnOrigin v{Assembly.GetEntryAssembly().GetName().Version.ToString()[..5]} by Dyvinia");
             WriteSeparator();
 
-            // Kill All Origin/EA related processes
-            KillProcesses();
-
             // Check if Origin Exists
             if (!File.Exists(OriginPath))
             {
@@ -29,11 +26,14 @@ namespace StayOnOrigin
                 ConsoleKeyInfo key = Console.ReadKey();
                 if (key.Key != ConsoleKey.Y)
                     Environment.Exit(0);
-                Console.WriteLine("\nDownloading Origin v10.5.118.52644...");
+                Console.WriteLine("\nDownloading Origin...");
                 ResetTempDir();
                 InstallOrigin().Wait();
                 WriteSeparator();
             }
+
+            // Kill All Origin/EA related processes
+            KillProcesses();
 
             // Check if Origin is too new (Anything after 10.5.120.x)
             if (OriginVersion.CompareTo(new("10.5.120.0")) > 0)
