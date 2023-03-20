@@ -19,8 +19,7 @@ namespace StayOnOrigin
             WriteSeparator();
 
             // Check if Origin Exists
-            if (!File.Exists(OriginPath))
-            {
+            if (!File.Exists(OriginPath)) {
                 Console.WriteLine("Origin is not installed or could not be found.");
                 Console.WriteLine("Press Y to install Origin, or any other key to exit.");
                 ConsoleKeyInfo key = Console.ReadKey();
