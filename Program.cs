@@ -1,19 +1,16 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Reflection;
 using DyviniaUtils;
 using Microsoft.Win32;
 
-namespace StayOnOrigin
-{
-    internal class Program
-    {
+namespace StayOnOrigin {
+    internal class Program {
         public static string OriginPath => Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Origin")?.GetValue("OriginPath")?.ToString();
         public static Version OriginVersion => new(FileVersionInfo.GetVersionInfo(OriginPath).FileVersion.Replace(",", "."));
         public static string TempDirPath => Path.Combine(Environment.CurrentDirectory, "temp");
 
-        static void Main()
-        {
+        static void Main() {
             // Version and Stuff
             Console.WriteLine($"StayOnOrigin v{Assembly.GetEntryAssembly().GetName().Version.ToString()[..5]} by Dyvinia");
             WriteSeparator();
@@ -35,16 +32,14 @@ namespace StayOnOrigin
             KillProcesses();
 
             // Check if Origin is too new (Anything after 10.5.120.x)
-            if (OriginVersion.CompareTo(new("10.5.120.0")) > 0)
-            {
+            if (OriginVersion.CompareTo(new("10.5.120.0")) > 0) {
                 Console.WriteLine($"Origin v{OriginVersion} is too recent");
                 Console.WriteLine("Downgrading to Origin v10.5.118.52644...");
                 ResetTempDir();
                 UpdateOrigin().Wait();
                 WriteSeparator();
             }
-            else
-            {
+            else {
                 Console.WriteLine($"Origin v{OriginVersion}");
                 WriteSeparator();
             }
@@ -65,8 +60,7 @@ namespace StayOnOrigin
             Console.ReadKey();
         }
 
-        static async Task InstallOrigin()
-        {
+        static async Task InstallOrigin() {
             // Download from EA Servers
             //string originURL = @"https://cdn.discordapp.com/attachments/693482239593283694/1086045449191968899/OriginSetup_1.exe";
             string originURL = @"https://download.dm.origin.com/origin/live/OriginSetup.exe";
@@ -89,8 +83,7 @@ namespace StayOnOrigin
             Console.WriteLine($"Installed Origin");
         }
 
-        static async Task UpdateOrigin()
-        {
+        static async Task UpdateOrigin() {
             // Download from EA Servers
             string originURL = @"https://origin-a.akamaihd.net/Origin-Client-Download/origin/live/OriginUpdate_10_5_118_52644.zip";
             string destinationPath = Path.Combine(TempDirPath, Path.GetFileName(originURL));
@@ -107,8 +100,7 @@ namespace StayOnOrigin
             // Install
             using ZipArchive archive = ZipFile.OpenRead(destinationPath);
             int i = 0;
-            foreach (ZipArchiveEntry entry in archive.Entries)
-            {
+            foreach (ZipArchiveEntry entry in archive.Entries) {
                 int percentage = Convert.ToInt32(100 * i++ / (float)archive.Entries.Count);
                 Console.Write($"\rInstalling: {percentage}%");
                 entry.ExtractToFile(Path.Combine(Path.GetDirectoryName(OriginPath), entry.FullName), true);
@@ -117,10 +109,8 @@ namespace StayOnOrigin
             Console.WriteLine($"Installed Origin v10.5.118.52644");
         }
 
-        static void ClearFile(string path, bool readOnly)
-        {
-            if (File.Exists(path) && !File.GetAttributes(path).HasFlag(FileAttributes.ReadOnly))
-            {
+        static void ClearFile(string path, bool readOnly) {
+            if (File.Exists(path) && !File.GetAttributes(path).HasFlag(FileAttributes.ReadOnly)) {
                 // Backup file by copying to file.exe.bak
                 Console.WriteLine($"Backing up {path}");
                 File.Copy(path, path + ".bak", true);
@@ -135,8 +125,7 @@ namespace StayOnOrigin
             }
         }
 
-        static void DisableMigration()
-        {
+        static void DisableMigration() {
             string localXML = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), @"Origin\local.xml");
 
             Console.WriteLine($"Opening {localXML}");
@@ -150,8 +139,7 @@ namespace StayOnOrigin
                 "AutoUpdate",
                 "/Settings"
             };
-            foreach (string line in fileLines)
-            {
+            foreach (string line in fileLines) {
                 if (!settingsCheck.Any(line.Contains))
                     fileLinesNew.Add(line);
             }
@@ -168,23 +156,19 @@ namespace StayOnOrigin
             File.WriteAllLines(localXML, fileLinesNew.ToArray());
         }
 
-        static void KillProcesses()
-        {
+        static void KillProcesses() {
             bool addSeparator = false;
-            foreach (Process process in Process.GetProcessesByName("EADesktop"))
-            {
+            foreach (Process process in Process.GetProcessesByName("EADesktop")) {
                 process.Kill();
                 Console.WriteLine($"Killed {process.ProcessName}");
                 addSeparator = true;
             }
-            foreach (Process process in Process.GetProcessesByName("Origin"))
-            {
+            foreach (Process process in Process.GetProcessesByName("Origin")) {
                 process.Kill();
                 Console.WriteLine($"Killed {process.ProcessName}");
                 addSeparator = true;
             }
-            foreach (Process process in Process.GetProcessesByName("OriginWebHelperService"))
-            {
+            foreach (Process process in Process.GetProcessesByName("OriginWebHelperService")) {
                 process.Kill();
                 Console.WriteLine($"Killed {process.ProcessName}");
                 addSeparator = true;
@@ -193,16 +177,14 @@ namespace StayOnOrigin
                 WriteSeparator(); // Prevent double separator from appearing in console
         }
 
-        static void ResetTempDir(bool recreateDir = true)
-        {
+        static void ResetTempDir(bool recreateDir = true) {
             if (Directory.Exists(TempDirPath))
                 Directory.Delete(TempDirPath, true);
             if (recreateDir)
                 Directory.CreateDirectory(TempDirPath);
         }
 
-        static void WriteSeparator()
-        {
+        static void WriteSeparator() {
             Console.WriteLine(new string('-', Console.WindowWidth - 1));
         }
     }
