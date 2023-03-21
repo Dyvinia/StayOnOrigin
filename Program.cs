@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Reflection;
 using DyviniaUtils;
@@ -15,16 +15,21 @@ namespace StayOnOrigin {
             Console.WriteLine($"StayOnOrigin v{Assembly.GetEntryAssembly().GetName().Version.ToString()[..5]} by Dyvinia");
             WriteSeparator();
 
-            // Kill All Origin/EA related processes
-            KillProcesses();
-
             // Check if Origin Exists
             if (!File.Exists(OriginPath)) {
-                Console.WriteLine("Origin Not Found");
-                Console.Write("Press Any Key to Exit...");
-                Console.ReadKey();
-                Environment.Exit(0);
+                Console.WriteLine("Origin is not installed or could not be found.");
+                Console.WriteLine("Press Y to install Origin, or any other key to exit.");
+                ConsoleKeyInfo key = Console.ReadKey();
+                if (key.Key != ConsoleKey.Y)
+                    Environment.Exit(0);
+                Console.WriteLine("\nDownloading Origin...");
+                ResetTempDir();
+                InstallOrigin().Wait();
+                WriteSeparator();
             }
+
+            // Kill All Origin/EA related processes
+            KillProcesses();
 
             // Check if Origin is too new (Anything after 10.5.120.x)
             if (OriginVersion.CompareTo(new("10.5.120.0")) > 0) {
@@ -55,6 +60,29 @@ namespace StayOnOrigin {
             Console.ReadKey();
         }
 
+        static async Task InstallOrigin() {
+            // Download from EA Servers
+            //string originURL = @"https://cdn.discordapp.com/attachments/693482239593283694/1086045449191968899/OriginSetup_1.exe";
+            string originURL = @"https://download.dm.origin.com/origin/live/OriginSetup.exe";
+            string destinationPath = Path.Combine(TempDirPath, Path.GetFileName(originURL));
+
+            IProgress<double> progress = new Progress<double>(p => {
+                int percentage = Convert.ToInt32(p * 100);
+                Console.Write($"\rDownloading: {percentage}%");
+            });
+
+            await Downloader.Download(originURL, destinationPath, progress);
+            Console.WriteLine();
+            Console.WriteLine($"Downloaded {Path.GetFileName(originURL)}");
+
+            // Install
+            var originInstall = Process.Start(destinationPath);
+            Console.WriteLine("Origin is being installed...");
+            originInstall.WaitForExit();
+            Console.WriteLine();
+            Console.WriteLine($"Installed Origin");
+        }
+
         static async Task UpdateOrigin() {
             // Download from EA Servers
             string originURL = @"https://origin-a.akamaihd.net/Origin-Client-Download/origin/live/OriginUpdate_10_5_118_52644.zip";
@@ -73,7 +101,7 @@ namespace StayOnOrigin {
             using ZipArchive archive = ZipFile.OpenRead(destinationPath);
             int i = 0;
             foreach (ZipArchiveEntry entry in archive.Entries) {
-                int percentage = Convert.ToInt32(100*i++/(float)archive.Entries.Count);
+                int percentage = Convert.ToInt32(100 * i++ / (float)archive.Entries.Count);
                 Console.Write($"\rInstalling: {percentage}%");
                 entry.ExtractToFile(Path.Combine(Path.GetDirectoryName(OriginPath), entry.FullName), true);
             }
