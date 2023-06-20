@@ -1,3 +1,6 @@
+this no longer works
+
+
 # StayOnOrigin
 Disables [EA App Migration](https://user-images.githubusercontent.com/13797470/225176539-4976f890-d7d0-4e1e-bae5-74a70cc42551.png) popup and automatically downgrades Origin if needed
 
